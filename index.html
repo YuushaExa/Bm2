@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload and Sort Chrome Bookmarks</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #sortedBookmarks {
+            margin-top: 20px;
+        }
+        ul {
+            list-style-type: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload Your Chrome Bookmarks</h1>
+    <input type="file" id="bookmarkFile" accept=".html" required>
+    <button id="uploadButton">Upload</button>
+
+    <div id="sortedBookmarks"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
