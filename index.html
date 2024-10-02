@@ -3,27 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload and Sort Chrome Bookmarks</title>
+    <title>Screen Capture Example</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        #sortedBookmarks {
+        #preview {
             margin-top: 20px;
-        }
-        ul {
-            list-style-type: none;
+            border: 1px solid #ccc;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
         }
     </style>
 </head>
 <body>
-    <h1>Upload Your Chrome Bookmarks</h1>
-    <input type="file" id="bookmarkFile" accept=".html" required>
-    <button id="uploadButton">Upload</button>
+    <h1>Screen Capture Example</h1>
+    <button id="captureButton">Capture Screenshot</button>
+    <img id="preview" alt="Captured Screenshot" />
 
-    <div id="sortedBookmarks"></div>
+    <script>
+        async function captureScreenshot() {
+            try {
+                // Request to capture the screen
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true
+                });
 
-    <script src="script.js"></script>
+                // Create a video element to play the stream
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.play();
+
+                // Wait for the video to be ready
+                video.onloadedmetadata = () => {
+                    // Set the canvas dimensions to match the video
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+
+                    // Draw the current video frame to the canvas
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0);
+
+                    // Convert the canvas to a data URL (image)
+                    const imageDataUrl = canvas.toDataURL('image/png');
+
+                    // Display the captured image in the <img> element
+                    const preview = document.getElementById('preview');
+                    preview.src = imageDataUrl;
+
+                    // Stop the video stream
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                // Handle errors when the video cannot be played
+                video.onerror = (e) => {
+                    console.error('Video error:', e);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+            } catch (err) {
+                console.error('Error capturing screenshot:', err);
+            }
+        }
+
+        // Add event listener to the button
+        document.getElementById('captureButton').addEventListener('click', captureScreenshot);
+    </script>
 </body>
 </html>
