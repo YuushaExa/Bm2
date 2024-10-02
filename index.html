@@ -8,64 +8,52 @@
         #preview {
             margin-top: 20px;
             border: 1px solid #ccc;
-            width: 100%;
-            max-width: 600px;
-            height: auto;
+            width: 640px; /* Set a width for the preview */
+            height: 480px; /* Set a height for the preview */
         }
     </style>
 </head>
 <body>
     <h1>Screen Capture Example</h1>
-    <button id="captureButton">Capture Screenshot</button>
-    <img id="preview" alt="Captured Screenshot" />
+    <button id="startCapture">Start Capture</button>
+    <div id="previewContainer">
+        <img id="preview" alt="Captured Frame" />
+    </div>
 
     <script>
-        async function captureScreenshot() {
+        document.getElementById('startCapture').addEventListener('click', async () => {
             try {
-                // Request to capture the screen
-                const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true
-                });
+                // Step 1: Get the display media
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                
+                // Step 2: Get the video track
+                const track = stream.getVideoTracks()[0];
+                
+                // Step 3: Create an ImageCapture instance
+                const imageCapture = new ImageCapture(track);
+                
+                // Step 4: Grab a frame
+                const imageBitmap = await imageCapture.grabFrame();
+                
+                // Create a canvas to draw the imageBitmap
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = imageBitmap.width;
+                canvas.height = imageBitmap.height;
+                ctx.drawImage(imageBitmap, 0, 0);
+                
+                // Convert the canvas to a data URL
+                const dataUrl = canvas.toDataURL();
+                
+                // Set the src of the img element to the data URL
+                document.getElementById('preview').src = dataUrl;
 
-                // Create a video element to play the stream
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.play();
-
-                // Wait for the video to be ready
-                video.onloadedmetadata = () => {
-                    // Set the canvas dimensions to match the video
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-
-                    // Draw the current video frame to the canvas
-                    const context = canvas.getContext('2d');
-                    context.drawImage(video, 0, 0);
-
-                    // Convert the canvas to a data URL (image)
-                    const imageDataUrl = canvas.toDataURL('image/png');
-
-                    // Display the captured image in the <img> element
-                    const preview = document.getElementById('preview');
-                    preview.src = imageDataUrl;
-
-                    // Stop the video stream
-                    stream.getTracks().forEach(track => track.stop());
-                };
-
-                // Handle errors when the video cannot be played
-                video.onerror = (e) => {
-                    console.error('Video error:', e);
-                    stream.getTracks().forEach(track => track.stop());
-                };
-            } catch (err) {
-                console.error('Error capturing screenshot:', err);
+                // Stop the video track after capturing
+                track.stop();
+            } catch (error) {
+                console.error('Error capturing screen:', error);
             }
-        }
-
-        // Add event listener to the button
-        document.getElementById('captureButton').addEventListener('click', captureScreenshot);
+        });
     </script>
 </body>
 </html>
