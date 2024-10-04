@@ -8,50 +8,56 @@
         #preview {
             margin-top: 20px;
             border: 1px solid #ccc;
-            width: 640px; /* Set a width for the preview */
-            height: 480px; /* Set a height for the preview */
+            display: none; /* Initially hidden */
+        }
+        #preview img {
+            max-width: 100%; /* Responsive image */
         }
     </style>
 </head>
 <body>
-    <h1>Screen Capture Example</h1>
-    <button id="startCapture">Start Capture</button>
-    <div id="previewContainer">
-        <img id="preview" alt="Captured Frame" />
+    <button id="screenshotBtn">Capture Screen</button>
+    <div id="preview">
+        <h2>Preview:</h2>
+        <img id="capturedImage" alt="Captured Screenshot" />
     </div>
-
     <script>
-        document.getElementById('startCapture').addEventListener('click', async () => {
+        document.getElementById('screenshotBtn').addEventListener('click', async () => {
             try {
-                // Step 1: Get the display media
-                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                
-                // Step 2: Get the video track
-                const track = stream.getVideoTracks()[0];
-                
-                // Step 3: Create an ImageCapture instance
-                const imageCapture = new ImageCapture(track);
-                
-                // Step 4: Grab a frame
-                const imageBitmap = await imageCapture.grabFrame();
-                
-                // Create a canvas to draw the imageBitmap
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = imageBitmap.width;
-                canvas.height = imageBitmap.height;
-                ctx.drawImage(imageBitmap, 0, 0);
-                
-                // Convert the canvas to a data URL
-                const dataUrl = canvas.toDataURL();
-                
-                // Set the src of the img element to the data URL
-                document.getElementById('preview').src = dataUrl;
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        width: { ideal: 1920 }, // Set ideal width
+                        height: { ideal: 1080 } // Set ideal height
+                    }
+                });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.play();
 
-                // Stop the video track after capturing
-                track.stop();
-            } catch (error) {
-                console.error('Error capturing screen:', error);
+                video.onloadedmetadata = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0);
+
+                    // Stop the stream
+                    stream.getTracks().forEach(track => track.stop());
+
+                    // Convert to image and download
+                    const imgData = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = 'screenshot.png';
+                    link.click();
+
+                    // Show the preview
+                    const capturedImage = document.getElementById('capturedImage');
+                    capturedImage.src = imgData;
+                    document.getElementById('preview').style.display = 'block';
+                };
+            } catch (err) {
+                console.error("Error: " + err);
             }
         });
     </script>
