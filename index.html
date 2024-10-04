@@ -24,37 +24,32 @@
     <script>
         document.getElementById('screenshotBtn').addEventListener('click', async () => {
             try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: {
-                        width: { ideal: 1920 }, // Set ideal width
-                        height: { ideal: 1080 } // Set ideal height
-                    }
-                });
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.play();
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+    video: {
+        width: { ideal: 1920 }, // Set ideal width
+        height: { ideal: 1080 } // Set ideal height
+    }
+});
 
-                video.onloadedmetadata = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0);
+const video = document.createElement('video');
+video.srcObject = stream;
+video.play();
 
-                    // Stop the stream
-                    stream.getTracks().forEach(track => track.stop());
+video.onloadedmetadata = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth; // Use actual video width
+    canvas.height = video.videoHeight; // Use actual video height
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    // Stop the stream
+    stream.getTracks().forEach(track => track.stop());
 
-                    // Convert to image and download
-                    const imgData = canvas.toDataURL('image/png');
-                    const link = document.createElement('a');
-                    link.href = imgData;
-                    link.download = 'screenshot.png';
-                    link.click();
-
-                    // Show the preview
-                    const capturedImage = document.getElementById('capturedImage');
-                    capturedImage.src = imgData;
-                    document.getElementById('preview').style.display = 'block';
+    // Convert to image and show the preview
+    const imgData = canvas.toDataURL('image/png');
+    const capturedImage = document.getElementById('capturedImage');
+    capturedImage.src = imgData;
+    document.getElementById('preview').style.display = 'block';
                 };
             } catch (err) {
                 console.error("Error: " + err);
