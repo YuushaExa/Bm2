@@ -1,0 +1,90 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+#sidebar {
+  width: 250px;
+  background-color: #f4f4f4;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+}
+
+#main-content {
+  flex: 1;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+}
+
+#details-sidebar {
+  width: 300px;
+  background-color: #f9f9f9;
+  padding: 20px;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+ul {
+  list-style-type: none;
+}
+
+ul ul {
+  padding-left: 20px; /* Indent for nested folders */
+}
+
+button {
+  padding: 10px;
+  margin-top: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+}
+
+#bookmark-list li {
+  padding: 10px;
+  margin: 5px 0;
+  background-color: #eee;
+  cursor: pointer;
+}
+
+#bookmark-list li:hover {
+  background-color: #ddd;
+}
+
+.toggle-folder {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.folder-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
