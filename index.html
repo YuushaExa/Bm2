@@ -1,60 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Capture Example</title>
-    <style>
-        #preview {
-            margin-top: 20px;
-            border: 1px solid #ccc;
-            display: none; /* Initially hidden */
-        }
-        #preview img {
-            max-width: 100%; /* Responsive image */
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmark App</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <button id="screenshotBtn">Capture Screen</button>
-    <div id="preview">
-        <h2>Preview:</h2>
-        <img id="capturedImage" alt="Captured Screenshot" />
+  <div class="container">
+    <!-- Left Sidebar (Folders) -->
+    <div id="sidebar">
+      <h2>Folders</h2>
+      <ul id="folder-list">
+        <!-- Folders will be dynamically inserted here -->
+      </ul>
+      <button onclick="addFolder()">Add Folder</button>
     </div>
-    <script>
-        document.getElementById('screenshotBtn').addEventListener('click', async () => {
-            try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({
-    video: {
-        width: { ideal: 1920 }, // Set ideal width
-        height: { ideal: 1080 } // Set ideal height
-    }
-});
 
-const video = document.createElement('video');
-video.srcObject = stream;
-video.play();
+    <!-- Main Content (Center) -->
+    <div id="main-content">
+      <h2>Bookmarks</h2>
+      <ul id="bookmark-list">
+        <!-- Bookmarks will be dynamically inserted here -->
+      </ul>
+      <button onclick="addBookmark()">Add Bookmark</button>
+    </div>
 
-video.onloadedmetadata = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth; // Use actual video width
-    canvas.height = video.videoHeight; // Use actual video height
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    
-    // Stop the stream
-    stream.getTracks().forEach(track => track.stop());
+    <!-- Right Sidebar (Details) -->
+    <div id="details-sidebar">
+      <h2>Bookmark Details</h2>
+      <form id="bookmark-form">
+        <label for="bookmark-title">Title:</label>
+        <input type="text" id="bookmark-title" placeholder="Title" />
 
-    // Convert to image and show the preview
-    const imgData = canvas.toDataURL('image/png');
-    const capturedImage = document.getElementById('capturedImage');
-    capturedImage.src = imgData;
-    document.getElementById('preview').style.display = 'block';
-                };
-            } catch (err) {
-                console.error("Error: " + err);
-            }
-        });
-    </script>
+        <label for="bookmark-url">URL:</label>
+        <input type="url" id="bookmark-url" placeholder="https://example.com" />
+
+        <label for="bookmark-notes">Notes:</label>
+        <textarea id="bookmark-notes" placeholder="Notes..."></textarea>
+
+        <button type="button" onclick="saveBookmark()">Save</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
