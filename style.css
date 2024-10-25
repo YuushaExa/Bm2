@@ -76,7 +76,6 @@ input, textarea {
 }
 
 .toggle-folder {
-  background: none;
   border: none;
   cursor: pointer;
   font-weight: bold;
@@ -84,7 +83,6 @@ input, textarea {
 }
 
 .folder-button {
-  background: none;
   border: none;
   cursor: pointer;
 }
