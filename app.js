@@ -1,9 +1,40 @@
-let folders = [
-  { name: 'All', bookmarks: [], subfolders: [], isOpen: true }
+let spaces = [
+  { name: 'Default', folders: [{ name: 'All', bookmarks: [], subfolders: [], isOpen: true }] }
 ];
 
-let currentFolder = folders[0];
+let currentSpaceIndex = 0;
+let currentFolder = spaces[currentSpaceIndex].folders[0];
 let currentBookmarkIndex = -1;
+
+// Render the space selection dropdown
+function renderSpaces() {
+  const spaceSelect = document.getElementById('space-select');
+  spaceSelect.innerHTML = ''; // Clear existing options
+
+  spaces.forEach((space, index) => {
+    const option = document.createElement('option');
+    option.value = index;
+    option.innerText = space.name;
+    spaceSelect.appendChild(option);
+  });
+}
+
+// Select a space and show its folders
+function selectSpace() {
+  currentSpaceIndex = document.getElementById('space-select').value;
+  currentFolder = spaces[currentSpaceIndex].folders[0]; // Reset to the first folder
+  renderFolders(spaces[currentSpaceIndex].folders, document.getElementById('folder-list'));
+  renderBookmarks();
+}
+
+// Add a new space
+function addSpace() {
+  const spaceName = prompt('Enter space name:');
+  if (spaceName) {
+    spaces.push({ name: spaceName, folders: [] });
+    renderSpaces();
+  }
+}
 
 // Render the folder structure with collapse functionality
 function renderFolders(folders, parentElement) {
@@ -27,7 +58,7 @@ function renderFolders(folders, parentElement) {
     folderButton.onclick = () => selectFolder(folderIndex, folders);
     folderButton.classList.add('folder-button');
 
-    // Append the toggle button and folder button to the list item
+     // Append the toggle button and folder button to the list item
     li.appendChild(toggleButton);
     li.appendChild(folderButton);
 
@@ -104,19 +135,19 @@ function clearForm() {
   document.getElementById('bookmark-notes').value = '';
 }
 
-// Add a new folder
+// Add a new folder to the current space
 function addFolder() {
   const folderName = prompt('Enter folder name:');
   if (folderName) {
     currentFolder.subfolders.push({ name: folderName, bookmarks: [], subfolders: [], isOpen: true });
-    renderFolders(folders, document.getElementById('folder-list'));
+    renderFolders(spaces[currentSpaceIndex].folders, document.getElementById('folder-list'));
   }
 }
 
 // Initialize the app
 function init() {
-  renderFolders(folders, document.getElementById('folder-list'));
-  renderBookmarks();
+  renderSpaces();
+  selectSpace(); // Select the default space
 }
 
 init();
