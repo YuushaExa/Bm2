@@ -111,4 +111,7 @@ document.getElementById("folder-list").addEventListener("click", async (event) =
   }
 });
 
-// Load spaces
+// Load spaces when the page is fully loaded
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadSpaces(); // Load spaces on initial page load
+});
