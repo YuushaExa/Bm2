@@ -11,7 +11,7 @@ async function addSpace() {
   const spaceName = prompt("Enter space name:");
   if (spaceName) {
     await db.spaces.add({ name: spaceName });
-    loadSpaces();
+    await loadSpaces(); // Refresh spaces after adding
   }
 }
 
@@ -30,7 +30,7 @@ async function loadSpaces() {
 
   // Load folders for the first space by default
   if (spaces.length > 0) {
-    loadFolders(spaces[0].id);
+    await loadFolders(spaces[0].id);
   }
 }
 
@@ -53,7 +53,7 @@ async function addFolder() {
   const folderName = prompt("Enter folder name:");
   if (folderName) {
     await db.folders.add({ name: folderName, spaceId: parseInt(spaceId) });
-    loadFolders(spaceId);
+    await loadFolders(spaceId); // Refresh folders after adding
   }
 }
 
@@ -66,7 +66,7 @@ async function addBookmark() {
 
   if (title && url) {
     await db.bookmarks.add({ title, url, notes, folderId: parseInt(folderId) });
-    loadBookmarks(folderId);
+    await loadBookmarks(folderId); // Refresh bookmarks after adding
   } else {
     alert("Title and URL are required!");
   }
@@ -92,7 +92,27 @@ async function saveBookmark() {
   const notes = document.getElementById("bookmark-notes").value;
 
   // Here you can implement logic to save or update bookmarks
+  // For example, you might want to check if the bookmark already exists
+  const folderId = prompt("Enter folder ID to save bookmark to:");
+  if (folderId) {
+    // Check if the bookmark already exists (optional)
+    const existingBookmark = await db.bookmarks.where("title").equals(title).first();
+    if (existingBookmark) {
+      // Update existing bookmark
+      await db.bookmarks.update(existingBookmark.id, { title, url, notes, folderId: parseInt(folderId) });
+    } else {
+      // Add new bookmark
+      await db.bookmarks.add({ title, url, notes, folderId: parseInt(folderId) });
+    }
+    await loadBookmarks(folderId); // Refresh bookmarks after saving
+  }
 }
+
+// Event listener for space selection change
+document.getElementById("space-select").addEventListener("change", async (event) => {
+  const selectedSpaceId = event.target.value;
+  await loadFolders(selectedSpaceId); // Load folders for the selected space
+});
 
 // Load spaces on initial load
 loadSpaces();
