@@ -1,17 +1,26 @@
 // Initialize Dexie
 const db = new Dexie("BookmarkApp");
 db.version(1).stores({
-  spaces: "++id,name", // Space (Database)
-  folders: "++id,name,spaceId", // Folders associated with a space
-  bookmarks: "++id,title,url,notes,folderId" // Bookmarks associated with a folder
+  spaces: "++id,name",
+  folders: "++id,name,spaceId",
+  bookmarks: "++id,title,url,notes,folderId"
 });
+
+// Utility function to clear inner HTML
+function clearInnerHTML(elementId) {
+  document.getElementById(elementId).innerHTML = "";
+}
 
 // Function to add a new space
 async function addSpace() {
   const spaceName = prompt("Enter space name:");
   if (spaceName) {
-    await db.spaces.add({ name: spaceName });
-    await loadSpaces(); // Refresh spaces after adding
+    try {
+      await db.spaces.add({ name: spaceName });
+      await loadSpaces();
+    } catch (error) {
+      alert("Error adding space: " + error);
+    }
   }
 }
 
@@ -19,7 +28,7 @@ async function addSpace() {
 async function loadSpaces() {
   const spaces = await db.spaces.toArray();
   const spaceSelect = document.getElementById("space-select");
-  spaceSelect.innerHTML = ""; // Clear existing options
+  clearInnerHTML("space-select");
 
   spaces.forEach(space => {
     const option = document.createElement("option");
@@ -28,7 +37,6 @@ async function loadSpaces() {
     spaceSelect.appendChild(option);
   });
 
-  // Load folders for the first space by default
   if (spaces.length > 0) {
     await loadFolders(spaces[0].id);
   }
@@ -36,22 +44,22 @@ async function loadSpaces() {
 
 // Function to load folders for a selected space
 async function loadFolders(spaceId) {
-  const folders = await db.folders.where("spaceId").equals(spaceId).toArray();
+  const folders = await db.folders.where("spaceId").equals(parseInt(spaceId)).toArray();
   const folderList = document.getElementById("folder-list");
-  folderList.innerHTML = ""; // Clear existing folders
+  clearInnerHTML("folder-list");
 
-  folders.forEach(folder => {
+  if (folders.length === 0) {
     const li = document.createElement("li");
-    li.textContent = folder.name;
-    li.setAttribute("data-id", folder.id); // Store folder ID for future reference
+    li.textContent = "No folders available for this space.";
     folderList.appendChild(li);
-  });
-
-  // Optionally, load bookmarks for the first folder if any
-  if (folders.length > 0) {
-    await loadBookmarks(folders[0].id);
   } else {
-    document.getElementById("bookmark-list").innerHTML = ""; // Clear bookmarks if no folders
+    folders.forEach(folder => {
+      const li = document.createElement("li");
+      li.textContent = folder.name;
+      li.setAttribute("data-id", folder.id);
+      folderList.appendChild(li);
+    });
+    await loadBookmarks(folders[0].id);
   }
 }
 
@@ -60,8 +68,12 @@ async function addFolder() {
   const spaceId = document.getElementById("space-select").value;
   const folderName = prompt("Enter folder name:");
   if (folderName) {
-    await db.folders.add({ name: folderName, spaceId: parseInt(spaceId) });
-    await loadFolders(spaceId); // Refresh folders after adding
+    try {
+      await db.folders.add({ name: folderName, spaceId: parseInt(spaceId) });
+      await loadFolders(spaceId);
+    } catch (error) {
+      alert("Error adding folder: " + error);
+    }
   }
 }
 
@@ -73,55 +85,45 @@ async function addBookmark() {
   const notes = document.getElementById("bookmark-notes").value;
 
   if (title && url) {
-    await db.bookmarks.add({ title, url, notes, folderId: parseInt(folderId) });
-    await loadBookmarks(folderId); // Refresh bookmarks after adding
-  } else {
+    try {
+      await db.bookmarks.add({ title, url, notes, folderId: parseInt(folderId) });
+      await loadBookmarks(folderId);
+    } catch (error) {
+      alert("Error adding bookmark: " + error);
+    }
+   } else {
     alert("Title and URL are required!");
   }
 }
 
 // Function to load bookmarks for a selected folder
 async function loadBookmarks(folderId) {
-  const bookmarks = await db.bookmarks.where("folderId").equals(folderId).toArray();
+  const bookmarks = await db.bookmarks.where("folderId").equals(parseInt(folderId)).toArray();
   const bookmarkList = document.getElementById("bookmark-list");
-  bookmarkList.innerHTML = ""; // Clear existing bookmarks
+  clearInnerHTML("bookmark-list");
 
-  bookmarks.forEach(bookmark => {
+  if (bookmarks.length === 0) {
     const li = document.createElement("li");
-    li.textContent = bookmark.title;
-    li.setAttribute("data-id", bookmark.id); // Store bookmark ID for future reference
+    li.textContent = "No bookmarks available for this folder.";
     bookmarkList.appendChild(li);
-  });
+  } else {
+    bookmarks.forEach(bookmark => {
+      const li = document.createElement("li");
+      li.textContent = bookmark.title;
+      li.setAttribute("data-id", bookmark.id);
+      bookmarkList.appendChild(li);
+    });
+  }
 }
 
 // Function to handle space selection change
 async function selectSpace() {
   const selectedSpaceId = document.getElementById("space-select").value;
-  await loadFolders(selectedSpaceId); // Load folders for the selected space
+  await loadFolders(selectedSpaceId);
 }
 
 // Event listener for space selection change
 document.getElementById("space-select").addEventListener("change", selectSpace);
 
-// Function to load folders for a selected space
-async function loadFolders(spaceId) {
-  const folders = await db.folders.where("spaceId").equals(parseInt(spaceId)).toArray();
-  const folderList = document.getElementById("folder-list");
-  folderList.innerHTML = ""; // Clear existing folders
-
-  if (folders.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "No folders available for this space.";
-    folderList.appendChild(li);
-  } else {
-    folders.forEach(folder => {
-      const li = document.createElement("li");
-      li.textContent = folder.name;
-      li.setAttribute("data-id", folder.id); // Store folder ID for future reference
-      folderList.appendChild(li);
-    });
-
-    // Optionally, load bookmarks for the first folder if any
-    await loadBookmarks(folders[0].id);
-  }
-}
+// Initial load of spaces when the application starts
+loadSpaces();
