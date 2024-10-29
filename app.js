@@ -94,11 +94,14 @@ async function loadBookmarks(folderId) {
   });
 }
 
-// Event listener for space selection change
-document.getElementById("space-select").addEventListener("change", async (event) => {
-  const selectedSpaceId = event.target.value;
+// Function to handle space selection change
+async function selectSpace() {
+  const selectedSpaceId = document.getElementById("space-select").value;
   await loadFolders(selectedSpaceId); // Load folders for the selected space
-});
+}
+
+// Event listener for space selection change
+document.getElementById("space-select").addEventListener("change", selectSpace);
 
 // Event listener for folder selection change
 document.getElementById("folder-list").addEventListener("click", async (event) => {
@@ -108,5 +111,4 @@ document.getElementById("folder-list").addEventListener("click", async (event) =
   }
 });
 
-// Load spaces on initial load
-loadSpaces();
+// Load spaces
