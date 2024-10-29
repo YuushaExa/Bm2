@@ -1,165 +1,98 @@
-// Initialize Dexie database
-const db = new Dexie("BookmarkAppDB");
+// Initialize Dexie
+const db = new Dexie("BookmarkApp");
 db.version(1).stores({
-  spaces: "++id, name, folders"
+  spaces: "++id,name", // Space (Database)
+  folders: "++id,name,spaceId", // Folders associated with a space
+  bookmarks: "++id,title,url,notes,folderId" // Bookmarks associated with a folder
 });
 
-let currentSpace = null;
-let currentFolder = null;
-let currentBookmarkIndex = -1;
-
-// Initialize the app
-async function init() {
-  await loadSpaces();
-  renderFolders();
-  renderBookmarks();
+// Function to add a new space
+async function addSpace() {
+  const spaceName = prompt("Enter space name:");
+  if (spaceName) {
+    await db.spaces.add({ name: spaceName });
+    loadSpaces();
+  }
 }
 
-// Load spaces from IndexedDB
+// Function to load spaces into the select dropdown
 async function loadSpaces() {
   const spaces = await db.spaces.toArray();
-
-  // Create default space if none exists
-  if (spaces.length === 0) {
-    await db.spaces.add({ name: "Default", folders: [] });
-  }
-
   const spaceSelect = document.getElementById("space-select");
-  spaceSelect.innerHTML = ''; // Clear existing options
+  spaceSelect.innerHTML = ""; // Clear existing options
 
-  spaces.forEach((space, index) => {
+  spaces.forEach(space => {
     const option = document.createElement("option");
     option.value = space.id;
-    option.innerText = space.name;
+    option.textContent = space.name;
     spaceSelect.appendChild(option);
-
-    // Set current space to the first space if not selected
-    if (!currentSpace) currentSpace = space;
   });
+
+  // Load folders for the first space by default
+  if (spaces.length > 0) {
+    loadFolders(spaces[0].id);
+  }
 }
 
-// Select a space
-async function selectSpace() {
-  const spaceId = parseInt(document.getElementById("space-select").value, 10);
-  currentSpace = await db.spaces.get(spaceId);
-  renderFolders();
-}
-
-// Render folders for the selected space
-function renderFolders() {
+// Function to load folders for a selected space
+async function loadFolders(spaceId) {
+  const folders = await db.folders.where("spaceId").equals(spaceId).toArray();
   const folderList = document.getElementById("folder-list");
-  folderList.innerHTML = '';
+  folderList.innerHTML = ""; // Clear existing folders
 
-  if (!currentSpace.folders) currentSpace.folders = [];
-
-  currentSpace.folders.forEach((folder, folderIndex) => {
+  folders.forEach(folder => {
     const li = document.createElement("li");
-    const toggleButton = document.createElement("button");
-    toggleButton.innerText = folder.isOpen ? "▼" : "►";
-    toggleButton.classList.add("toggle-folder");
-    toggleButton.onclick = () => {
-      folder.isOpen = !folder.isOpen;
-      renderFolders();
-    };
-
-    const folderButton = document.createElement("button");
-    folderButton.innerText = folder.name;
-    folderButton.onclick = () => selectFolder(folderIndex);
-    folderButton.classList.add("folder-button");
-
-    li.appendChild(toggleButton);
-    li.appendChild(folderButton);
-
-    if (folder.isOpen && folder.subfolders) {
-      const subfolderList = document.createElement("ul");
-      renderFolders(folder.subfolders, subfolderList);
-      li.appendChild(subfolderList);
-    }
+    li.textContent = folder.name;
     folderList.appendChild(li);
   });
 }
 
-// Select a folder and show its bookmarks
-function selectFolder(folderIndex) {
-  currentFolder = currentSpace.folders[folderIndex];
-  renderBookmarks();
-}
-
-// Render bookmarks in the selected folder
-function renderBookmarks() {
-  const bookmarkList = document.getElementById("bookmark-list");
-  bookmarkList.innerHTML = '';
-
-  if (currentFolder && currentFolder.bookmarks) {
-    currentFolder.bookmarks.forEach((bookmark, index) => {
-      const li = document.createElement("li");
-      li.innerText = bookmark.title;
-      li.onclick = () => showBookmarkDetails(index);
-      bookmarkList.appendChild(li);
-    });
+// Function to add a new folder
+async function addFolder() {
+  const spaceId = document.getElementById("space-select").value;
+  const folderName = prompt("Enter folder name:");
+  if (folderName) {
+    await db.folders.add({ name: folderName, spaceId: parseInt(spaceId) });
+    loadFolders(spaceId);
   }
 }
 
-// Show bookmark details in the form
-function showBookmarkDetails(index) {
-  const bookmark = currentFolder.bookmarks[index];
-  currentBookmarkIndex = index;
-  document.getElementById("bookmark-title").value = bookmark.title;
-  document.getElementById("bookmark-url").value = bookmark.url;
-  document.getElementById("bookmark-notes").value = bookmark.notes;
+// Function to add a new bookmark
+async function addBookmark() {
+  const folderId = prompt("Enter folder ID to add bookmark to:");
+  const title = document.getElementById("bookmark-title").value;
+  const url = document.getElementById("bookmark-url").value;
+  const notes = document.getElementById("bookmark-notes").value;
+
+  if (title && url) {
+    await db.bookmarks.add({ title, url, notes, folderId: parseInt(folderId) });
+    loadBookmarks(folderId);
+  } else {
+    alert("Title and URL are required!");
+  }
 }
 
-// Save the current bookmark to IndexedDB
+// Function to load bookmarks for a selected folder
+async function loadBookmarks(folderId) {
+  const bookmarks = await db.bookmarks.where("folderId").equals(folderId).toArray();
+  const bookmarkList = document.getElementById("bookmark-list");
+  bookmarkList.innerHTML = ""; // Clear existing bookmarks
+
+  bookmarks.forEach(bookmark => {
+    const li = document.createElement("li");
+    li.textContent = bookmark.title;
+    bookmarkList.appendChild(li);
+  });
+}
+
+// Function to save bookmark details
 async function saveBookmark() {
   const title = document.getElementById("bookmark-title").value;
   const url = document.getElementById("bookmark-url").value;
   const notes = document.getElementById("bookmark-notes").value;
 
-  const bookmark = { title, url, notes };
-  
-  if (currentBookmarkIndex !== -1) {
-    currentFolder.bookmarks[currentBookmarkIndex] = bookmark;
-  } else {
-    currentFolder.bookmarks.push(bookmark);
-  }
-
-  await db.spaces.put(currentSpace); // Save space with updated folder
-  renderBookmarks();
-  clearForm();
+  // Here you can implement logic to save or update bookmarks
 }
 
-// Add a new blank bookmark
-function addBookmark() {
-  currentBookmarkIndex = -1;
-  clearForm();
-}
-
-// Clear the form for adding a new bookmark
-function clearForm() {
-  document.getElementById("bookmark-title").value = '';
-  document.getElementById("bookmark-url").value = '';
-  document.getElementById("bookmark-notes").value = '';
-}
-
-// Add a new folder to the current space
-async function addFolder() {
-  const folderName = prompt("Enter folder name:");
-  if (folderName) {
-    if (!currentSpace.folders) currentSpace.folders = [];
-    currentSpace.folders.push({ name: folderName, bookmarks: [], subfolders: [], isOpen: true });
-    await db.spaces.put(currentSpace);
-    renderFolders();
-  }
-}
-
-// Add a new space
-async function addSpace() {
-  const spaceName = prompt("Enter space name:");
-  if (spaceName) {
-    const newSpace = { name: spaceName, folders: [] };
-    await db.spaces.add(newSpace);
-    loadSpaces();
-  }
-}
-
-init();
+// Load spaces on initial load
+loadSpaces();
