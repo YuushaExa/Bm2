@@ -103,15 +103,25 @@ async function selectSpace() {
 // Event listener for space selection change
 document.getElementById("space-select").addEventListener("change", selectSpace);
 
-// Event listener for folder selection change
-document.getElementById("folder-list").addEventListener("click", async (event) => {
-  const folderId = event.target.getAttribute("data-id");
-  if (folderId) {
-    await loadBookmarks(folderId); // Load bookmarks for the selected folder
-  }
-});
+// Function to load folders for a selected space
+async function loadFolders(spaceId) {
+  const folders = await db.folders.where("spaceId").equals(parseInt(spaceId)).toArray();
+  const folderList = document.getElementById("folder-list");
+  folderList.innerHTML = ""; // Clear existing folders
 
-// Load spaces when the page is fully loaded
-document.addEventListener("DOMContentLoaded", async () => {
-  await loadSpaces(); // Load spaces on initial page load
-});
+  if (folders.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No folders available for this space.";
+    folderList.appendChild(li);
+  } else {
+    folders.forEach(folder => {
+      const li = document.createElement("li");
+      li.textContent = folder.name;
+      li.setAttribute("data-id", folder.id); // Store folder ID for future reference
+      folderList.appendChild(li);
+    });
+
+    // Optionally, load bookmarks for the first folder if any
+    await loadBookmarks(folders[0].id);
+  }
+}
