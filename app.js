@@ -2,7 +2,7 @@
 const db = new Dexie("BookmarkApp");
 db.version(1).stores({
   spaces: "++id,name",
-  folders: "++id,name,spaceId",
+  folders: "++id,name,spaceId,parentId",
   bookmarks: "++id,title,url,notes,folderId"
 });
 
@@ -43,8 +43,8 @@ async function loadSpaces() {
 }
 
 // Function to load folders for a selected space
-async function loadFolders(spaceId) {
-  const folders = await db.folders.where("spaceId").equals(parseInt(spaceId)).toArray();
+async function loadFolders(spaceId, parentId = null) {
+  const folders = await db.folders.where("spaceId").equals(parseInt(spaceId)).and(folder => folder.parentId === parentId).toArray();
   const folderList = document.getElementById("folder-list");
   clearInnerHTML("folder-list");
 
@@ -58,24 +58,30 @@ async function loadFolders(spaceId) {
       li.textContent = folder.name;
       li.setAttribute("data-id", folder.id);
       folderList.appendChild(li);
+
+      // Load child folders
+      loadFolders(spaceId, folder.id);
     });
-    await loadBookmarks(folders[0].id);
   }
 }
+
 
 // Function to add a new folder
 async function addFolder() {
   const spaceId = document.getElementById("space-select").value;
   const folderName = prompt("Enter folder name:");
+  const parentFolderId = prompt("Enter parent folder ID (leave blank for no parent):");
+
   if (folderName) {
     try {
-      await db.folders.add({ name: folderName, spaceId: parseInt(spaceId) });
+      await db.folders.add({ name: folderName, spaceId: parseInt(spaceId), parentId: parentFolderId ? parseInt(parentFolderId) : null });
       await loadFolders(spaceId);
     } catch (error) {
       alert("Error adding folder: " + error);
     }
   }
 }
+
 
 // Function to add a new bookmark
 async function addBookmark() {
