@@ -43,8 +43,16 @@ async function loadFolders(spaceId) {
   folders.forEach(folder => {
     const li = document.createElement("li");
     li.textContent = folder.name;
+    li.setAttribute("data-id", folder.id); // Store folder ID for future reference
     folderList.appendChild(li);
   });
+
+  // Optionally, load bookmarks for the first folder if any
+  if (folders.length > 0) {
+    await loadBookmarks(folders[0].id);
+  } else {
+    document.getElementById("bookmark-list").innerHTML = ""; // Clear bookmarks if no folders
+  }
 }
 
 // Function to add a new folder
@@ -81,37 +89,23 @@ async function loadBookmarks(folderId) {
   bookmarks.forEach(bookmark => {
     const li = document.createElement("li");
     li.textContent = bookmark.title;
+    li.setAttribute("data-id", bookmark.id); // Store bookmark ID for future reference
     bookmarkList.appendChild(li);
   });
-}
-
-// Function to save bookmark details
-async function saveBookmark() {
-  const title = document.getElementById("bookmark-title").value;
-  const url = document.getElementById("bookmark-url").value;
-  const notes = document.getElementById("bookmark-notes").value;
-
-  // Here you can implement logic to save or update bookmarks
-  // For example, you might want to check if the bookmark already exists
-  const folderId = prompt("Enter folder ID to save bookmark to:");
-  if (folderId) {
-    // Check if the bookmark already exists (optional)
-    const existingBookmark = await db.bookmarks.where("title").equals(title).first();
-    if (existingBookmark) {
-      // Update existing bookmark
-      await db.bookmarks.update(existingBookmark.id, { title, url, notes, folderId: parseInt(folderId) });
-    } else {
-      // Add new bookmark
-      await db.bookmarks.add({ title, url, notes, folderId: parseInt(folderId) });
-    }
-    await loadBookmarks(folderId); // Refresh bookmarks after saving
-  }
 }
 
 // Event listener for space selection change
 document.getElementById("space-select").addEventListener("change", async (event) => {
   const selectedSpaceId = event.target.value;
   await loadFolders(selectedSpaceId); // Load folders for the selected space
+});
+
+// Event listener for folder selection change
+document.getElementById("folder-list").addEventListener("click", async (event) => {
+  const folderId = event.target.getAttribute("data-id");
+  if (folderId) {
+    await loadBookmarks(folderId); // Load bookmarks for the selected folder
+  }
 });
 
 // Load spaces on initial load
