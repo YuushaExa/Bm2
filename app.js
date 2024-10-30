@@ -2,7 +2,7 @@
 const db = new Dexie("BookmarkApp");
 db.version(1).stores({
   spaces: "++id,name",
-  folders: "++id,name,spaceId,parentId",
+  folders: "++id,name,spaceId",
   bookmarks: "++id,title,url,notes,folderId"
 });
 
@@ -43,50 +43,39 @@ async function loadSpaces() {
 }
 
 // Function to load folders for a selected space
-async function loadFolders(spaceId, parentId = null, level = 0) {
-  const folders = await db.folders.where("spaceId").equals(parseInt(spaceId)).and(folder => folder.parentId === parentId).toArray();
+async function loadFolders(spaceId) {
+  const folders = await db.folders.where("spaceId").equals(parseInt(spaceId)).toArray();
   const folderList = document.getElementById("folder-list");
-  
-  // If no folders are found, display a message
-  if (folders.length === 0 && parentId === null) {
-    clearInnerHTML("folder-list");
+  clearInnerHTML("folder-list");
+
+  if (folders.length === 0) {
     const li = document.createElement("li");
     li.textContent = "No folders available for this space.";
     folderList.appendChild(li);
-    return;
+  } else {
+    folders.forEach(folder => {
+      const li = document.createElement("li");
+      li.textContent = folder.name;
+      li.setAttribute("data-id", folder.id);
+      folderList.appendChild(li);
+    });
+    await loadBookmarks(folders[0].id);
   }
-
-  // Create a list for the current level of folders
-  folders.forEach(folder => {
-    const li = document.createElement("li");
-    li.textContent = folder.name;
-    li.setAttribute("data-id", folder.id);
-    li.style.paddingLeft = `${level * 20}px`; // Indent nested folders
-    folderList.appendChild(li);
-
-    // Load child folders recursively
-    loadFolders(spaceId, folder.id, level + 1);
-  });
 }
-
-
 
 // Function to add a new folder
 async function addFolder() {
   const spaceId = document.getElementById("space-select").value;
   const folderName = prompt("Enter folder name:");
-  const parentFolderId = prompt("Enter parent folder ID (leave blank for no parent):");
-
   if (folderName) {
     try {
-      await db.folders.add({ name: folderName, spaceId: parseInt(spaceId), parentId: parentFolderId ? parseInt(parentFolderId) : null });
+      await db.folders.add({ name: folderName, spaceId: parseInt(spaceId) });
       await loadFolders(spaceId);
     } catch (error) {
       alert("Error adding folder: " + error);
     }
   }
 }
-
 
 // Function to add a new bookmark
 async function addBookmark() {
